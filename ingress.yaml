@@ -1,0 +1,57 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
+    nginx.ingress.kubernetes.io/auth-response-headers: "X-Auth-Request-Email,X-Auth-Request-Preferred-Username,X-Authorization,X-Auth-Request-Redirect,X-Forwarded-Access-Token,X-Forwarded-User,X-Forwarded-Email,X-Forwarded-Preferred-Username"
+spec:
+  rules:
+    - http:
+        paths:
+          - backend:
+              service:
+                name: myapp
+                port:
+                  number: 80
+            pathType: Prefix
+            path: /
+      host: app.192.168.49.2.nip.io
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: oauth2-proxy
+spec:
+  rules:
+    - http:
+        paths:
+          - backend:
+              service:
+                name: oauth2-proxy
+                port:
+                  number: 4180
+            pathType: Prefix
+            path: /oauth2
+      host: app.192.168.49.2.nip.io
+---
+# TODO: keycloak
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keycloak
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - http:
+        paths:
+          - backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
+            pathType: Prefix
+            path: /
+      host: keycloak.192.168.49.2.nip.io
